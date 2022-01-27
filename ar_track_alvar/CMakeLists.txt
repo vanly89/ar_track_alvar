@@ -105,6 +105,11 @@ add_executable(individualMarkersNoKinect nodes/IndividualMarkersNoKinect.cpp)
 target_link_libraries(individualMarkersNoKinect ${PROJECT_NAME} ${catkin_LIBRARIES})
 add_dependencies(individualMarkersNoKinect ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+#add
+add_executable(individualMarkersNoKinect_g nodes/IndividualMarkersNoKinect_g.cpp)
+target_link_libraries(individualMarkersNoKinect_g ${PROJECT_NAME} ${catkin_LIBRARIES})
+add_dependencies(individualMarkersNoKinect_g ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
 add_executable(trainMarkerBundle nodes/TrainMarkerBundle.cpp)
 target_link_libraries(trainMarkerBundle ${PROJECT_NAME} ${catkin_LIBRARIES})
 add_dependencies(trainMarkerBundle ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
