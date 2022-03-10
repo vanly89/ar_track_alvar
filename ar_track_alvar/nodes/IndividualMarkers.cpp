@@ -40,6 +40,7 @@
 #include <cv_bridge/cv_bridge.h>
 #include <ar_track_alvar_msgs/AlvarMarker.h>
 #include <ar_track_alvar_msgs/AlvarMarkers.h>
+#include <ar_track_alvar_msgs/ARpoint.h>
 #include <tf/transform_listener.h>
 #include <tf/transform_broadcaster.h>
 #include <sensor_msgs/image_encodings.h>
@@ -67,6 +68,7 @@ ros::Publisher arMarkerPub_;
 ros::Publisher rvizMarkerPub_;
 ros::Publisher rvizMarkerPub2_;
 ar_track_alvar_msgs::AlvarMarkers arPoseMarkers_;
+ar_track_alvar_msgs::ARPoint arPoint_;
 visualization_msgs::Marker rvizMarker_;
 tf::TransformListener* tf_listener;
 tf::TransformBroadcaster* tf_broadcaster;
@@ -397,6 +399,7 @@ void getPointCloudCallback(const sensor_msgs::PointCloud2ConstPtr& msg)
       for (size_t i = 0; i < marker_detector.markers->size(); i++)
       {
         // Get the pose relative to the camera
+        // Try publishing here 
         int id = (*(marker_detector.markers))[i].GetId();
         Pose p = (*(marker_detector.markers))[i].pose;
 
@@ -407,6 +410,14 @@ void getPointCloudCallback(const sensor_msgs::PointCloud2ConstPtr& msg)
         double qy = p.quaternion[2];
         double qz = p.quaternion[3];
         double qw = p.quaternion[0];
+
+        arPoint_.point.x = px;
+        arPoint_.point.y = py;
+        arPoint_.point.z = pz;
+
+        arPoint_.header.stamp = image_msg->header.stamp;
+        arPointPub.publish(arPoint);
+
 
         tf::Quaternion rotation(qx, qy, qz, qw);
         tf::Vector3 origin(px, py, pz);
@@ -601,6 +612,8 @@ int main(int argc, char* argv[])
   tf_broadcaster = new tf::TransformBroadcaster();
   arMarkerPub_ =
       n.advertise<ar_track_alvar_msgs::AlvarMarkers>("ar_pose_marker", 0);
+  arPointPub_ =
+      n.advertise<ar_track_alvar_msgs::ARpoint>("ar_point", 0);
   rvizMarkerPub_ =
       n.advertise<visualization_msgs::Marker>("visualization_marker", 0);
   rvizMarkerPub2_ =
