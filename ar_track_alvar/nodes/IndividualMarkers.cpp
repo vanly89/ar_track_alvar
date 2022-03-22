@@ -65,10 +65,12 @@ cv_bridge::CvImagePtr cv_ptr_;
 image_transport::Subscriber cam_sub_;
 ros::Subscriber cloud_sub_;
 ros::Publisher arMarkerPub_;
+ros::Publisher arPointPub_;
 ros::Publisher rvizMarkerPub_;
 ros::Publisher rvizMarkerPub2_;
 ar_track_alvar_msgs::AlvarMarkers arPoseMarkers_;
-ar_track_alvar_msgs::ARPoint arPoint_;
+// ar_track_alvar_msgs::ARpoint arPoint_;
+geometry_msgs::Point arPoint_;
 visualization_msgs::Marker rvizMarker_;
 tf::TransformListener* tf_listener;
 tf::TransformBroadcaster* tf_broadcaster;
@@ -411,12 +413,12 @@ void getPointCloudCallback(const sensor_msgs::PointCloud2ConstPtr& msg)
         double qz = p.quaternion[3];
         double qw = p.quaternion[0];
 
-        arPoint_.point.x = px;
-        arPoint_.point.y = py;
-        arPoint_.point.z = pz;
+        arPoint_.x = px;
+        arPoint_.y = py;
+        arPoint_.z = pz;
 
-        arPoint_.header.stamp = image_msg->header.stamp;
-        arPointPub.publish(arPoint);
+        // arPoint_.header.stamp = image_msg->header.stamp;
+        arPointPub_.publish(arPoint_);
 
 
         tf::Quaternion rotation(qx, qy, qz, qw);
@@ -613,7 +615,7 @@ int main(int argc, char* argv[])
   arMarkerPub_ =
       n.advertise<ar_track_alvar_msgs::AlvarMarkers>("ar_pose_marker", 0);
   arPointPub_ =
-      n.advertise<ar_track_alvar_msgs::ARpoint>("ar_point", 0);
+      n.advertise<geometry_msgs::Point>("ar_point", 0);
   rvizMarkerPub_ =
       n.advertise<visualization_msgs::Marker>("visualization_marker", 0);
   rvizMarkerPub2_ =
