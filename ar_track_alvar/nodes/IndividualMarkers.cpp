@@ -420,7 +420,7 @@ void getPointCloudCallback(const sensor_msgs::PointCloud2ConstPtr& msg)
         // arPoint_.header.stamp = image_msg->header.stamp;
         arPointPub_.publish(arPoint_);
 
-
+        break; //avoid any tf stuff -Jackson
         tf::Quaternion rotation(qx, qy, qz, qw);
         tf::Vector3 origin(px, py, pz);
         tf::Transform t(rotation, origin);
