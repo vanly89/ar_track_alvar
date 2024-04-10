@@ -19,6 +19,7 @@ find_package(catkin REQUIRED COMPONENTS
         tf2
         visualization_msgs)
 
+find_package(yaml-cpp REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(TinyXML REQUIRED)
@@ -51,6 +52,7 @@ include_directories(include
                     ${catkin_INCLUDE_DIRS}
                     ${OpenCV_INCLUDE_DIRS}
                     ${TinyXML_INCLUDE_DIRS}
+                    ${YAML_CPP_INCLUDE_DIRS}
 
 )
 
@@ -85,7 +87,7 @@ add_library(${PROJECT_NAME}
     src/Threads_unix.cpp
     src/Util.cpp
 )
-target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS} ${TinyXML_LIBRARIES} ${catkin_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS} ${TinyXML_LIBRARIES} ${catkin_LIBRARIES} ${YAML_CPP_LIBRARIES})
 add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 # Kinect filtering code
@@ -113,6 +115,10 @@ add_dependencies(individualMarkersNoKinect_g ${${PROJECT_NAME}_EXPORTED_TARGETS}
 add_executable(trainMarkerBundle nodes/TrainMarkerBundle.cpp)
 target_link_libraries(trainMarkerBundle ${PROJECT_NAME} ${catkin_LIBRARIES})
 add_dependencies(trainMarkerBundle ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+add_executable(camera_info_node nodes/camera_info.cpp)
+target_link_libraries(camera_info_node ${PROJECT_NAME} ${catkin_LIBRARIES} )
+add_dependencies(camera_info_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS} )
 
 add_executable(findMarkerBundles nodes/FindMarkerBundles.cpp)
 target_link_libraries(findMarkerBundles ${PROJECT_NAME} kinect_filtering medianFilter ${catkin_LIBRARIES})

@@ -56,6 +56,8 @@ cv_bridge::CvImagePtr cv_ptr_;
 image_transport::Subscriber cam_sub_;
 ros::Publisher arMarkerPub_;
 ros::Publisher rvizMarkerPub_;
+ros::Publisher pose_pub;
+
 ar_track_alvar_msgs::AlvarMarkers arPoseMarkers_;
 visualization_msgs::Marker rvizMarker_;
 tf::TransformListener* tf_listener;
@@ -73,6 +75,7 @@ std::string cam_info_topic;
 std::string output_frame;
 int marker_resolution = 5;  // default marker resolution
 int marker_margin = 2;      // default marker margin
+ros::Time last_pose_time_;
 
 void getCapCallback(const sensor_msgs::ImageConstPtr& image_msg);
 
@@ -84,6 +87,7 @@ void getCapCallback(const sensor_msgs::ImageConstPtr& image_msg)
     try
     {
       tf::StampedTransform CamToOutput;
+
       try
       {
         tf_listener->waitForTransform(output_frame, image_msg->header.frame_id,
@@ -210,6 +214,26 @@ void getCapCallback(const sensor_msgs::ImageConstPtr& image_msg)
         // (usually torso)
         tf::Transform tagPoseOutput = CamToOutput * markerPose;
 
+        double roll = 0.0;
+        double pitch = 0.0;
+        double yaw = 0.0;
+        // tf::Matrix3x3(tagPoseOutput.getRotation()).getRPY(roll, pitch, yaw);
+        //ROS_INFO_STREAM("Roll0: " << roll << ", Pitch: " << pitch << ", Yaw: " << yaw);
+	
+	      tf::Quaternion quatt;
+        
+        quatt.setRPY(0,-M_PI / 2,0);
+        tf::Quaternion newOrientation = tagPoseOutput.getRotation() * quatt;
+        
+        
+        ar_track_alvar_msgs::AlvarMarker testpose;
+        tf::poseTFToMsg(tagPoseOutput, testpose.pose.pose);
+     
+      	tagPoseOutput.setRotation(newOrientation);
+
+        tf::Matrix3x3(tagPoseOutput.getRotation()).getRPY(roll, pitch, yaw);
+        // ROS_INFO_STREAM("Roll1: " << roll << ", Pitch: " << pitch << ", Yaw: " << yaw);
+
         // Create the pose marker messages
         ar_track_alvar_msgs::AlvarMarker ar_pose_marker;
         tf::poseTFToMsg(tagPoseOutput, ar_pose_marker.pose.pose);
@@ -217,6 +241,25 @@ void getCapCallback(const sensor_msgs::ImageConstPtr& image_msg)
         ar_pose_marker.header.stamp = image_msg->header.stamp;
         ar_pose_marker.id = id;
         arPoseMarkers_.markers.push_back(ar_pose_marker);
+
+           // add geometry_msgs::PoseStamped poseMsg;
+        geometry_msgs::PoseStamped poseMsg;
+        poseMsg.header.frame_id = output_frame;
+        poseMsg.pose.position = ar_pose_marker.pose.pose.position;
+        poseMsg.pose.orientation = ar_pose_marker.pose.pose.orientation;
+
+        ros::Time current_time = ros::Time::now();
+        if ((current_time - last_pose_time_).toSec() <= 2.0) {
+            // 如果时间差小于或等于2秒，视为连续的位姿，更新上一次发布位姿的时间并发布当前位姿
+            poseMsg.header.stamp = current_time; // 更新位姿消息的时间戳为当前时间
+            pose_pub.publish(poseMsg);
+            last_pose_time_ = current_time; // 更新上一次成功发布位姿的时间
+        }
+        else{
+          last_pose_time_ = current_time; // 更新上一次成功发布位姿的时间
+          continue;
+        }
+
       }
       arPoseMarkers_.header.stamp = image_msg->header.stamp;
       arPoseMarkers_.header.frame_id = output_frame;
@@ -255,6 +298,7 @@ int main(int argc, char* argv[])
 {
   ros::init(argc, argv, "marker_detect");
   ros::NodeHandle n, pn("~");
+  pose_pub = n.advertise<geometry_msgs::PoseStamped>("/aruco_single/single_pose", 100);
 
   if (argc > 1)
   {
